@@ -1,0 +1,8 @@
+# Keep LF in the working tree on every platform, so agent-authored files and
+# recorded NDJSON fixtures compare cleanly on Windows.
+* text=auto eol=lf
+
+*.jsonl text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

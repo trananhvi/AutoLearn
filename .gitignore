@@ -1,0 +1,14 @@
+node_modules/
+*.tsbuildinfo
+
+# Runtime state — never commit
+data/
+runtime/
+
+# Secrets
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store

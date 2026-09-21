@@ -1,0 +1,26 @@
+{
+  "name": "autolearn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Turns a learning topic in Jira into a structured learning path — stories and sub-tasks you work through yourself.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "tsx src/daemon.ts",
+    "start": "tsx src/daemon.ts",
+    "cli": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  }
+}
