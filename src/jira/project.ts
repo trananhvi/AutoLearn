@@ -1,4 +1,4 @@
-import type { IssueType, JiraClient } from './client.ts';
+import type { CreateField, IssueType, JiraClient } from './client.ts';
 import { projectStatuses } from './transitions.ts';
 
 /**
@@ -14,6 +14,11 @@ export interface ProjectSetup {
   storyType: IssueType;
   /** Null when the project has no sub-task type; details then stay in the story. */
   subtaskType: IssueType | null;
+  /**
+   * The story points field on the Story create screen, or null. Burndown and
+   * burnup charts measure this; without it every story counts as zero.
+   */
+  storyPointsField: { id: string; name: string } | null;
   statuses: {
     /** Where a topic waits to be picked up. */
     trigger: string;
@@ -72,6 +77,32 @@ export function planProjectStatuses(available: string[], triggerStatus: string):
   return { statuses: { trigger, planning, planned, failed }, warnings };
 }
 
+/**
+ * Team-managed projects call it "Story point estimate", company-managed
+ * "Story Points". The id differs per site, so it is always found by name.
+ */
+const STORY_POINT_NAMES = ['Story point estimate', 'Story Points', 'Story points'];
+
+export function pickStoryPointsField(fields: CreateField[]): { id: string; name: string } | null {
+  for (const name of STORY_POINT_NAMES) {
+    const found = fields.find((f) => norm(f.name) === norm(name));
+    if (found) return { id: found.fieldId, name: found.name };
+  }
+  return null;
+}
+
+/**
+ * Hours to story points, rounded up onto the Fibonacci scale Scrum teams use.
+ *
+ * Points are meant to be relative, but a learner has no velocity history to be
+ * relative to. Anchoring 1 point to roughly an hour gives the charts a sensible
+ * scale from the first sprint, and the numbers stay editable in Jira.
+ */
+export function storyPointsFor(hours: number): number {
+  const scale = [1, 2, 3, 5, 8, 13, 21];
+  return scale.find((p) => hours <= p) ?? 21;
+}
+
 export async function resolveProject(client: JiraClient, key: string, triggerStatus: string): Promise<ProjectSetup> {
   const project = await client.project(key);
   const { story, subtask } = pickIssueTypes(project.issueTypes ?? []);
@@ -80,7 +111,12 @@ export async function resolveProject(client: JiraClient, key: string, triggerSta
   const { statuses, warnings } = planProjectStatuses(await projectStatuses(client, key), triggerStatus);
   if (!subtask) warnings.unshift('No sub-task issue type; subtopics will be listed inside each story instead.');
 
-  return { key, storyType: story, subtaskType: subtask, statuses, warnings };
+  const storyPointsField = pickStoryPointsField(await client.createFields(key, story.id).catch(() => []));
+  if (!storyPointsField) {
+    warnings.push('No story points field on the Story screen; burndown/burnup charts will read zero. Scrum projects have one by default.');
+  }
+
+  return { key, storyType: story, subtaskType: subtask, storyPointsField, statuses, warnings };
 }
 
 /**

@@ -1,5 +1,6 @@
 import * as adf from '../jira/adf.ts';
 import type { AdfDoc } from '../jira/adf.ts';
+import { storyPointsFor } from '../jira/project.ts';
 import { orderStories, planStats, type LearningPlan, type LearningStory, type Subtopic } from './schema.ts';
 
 /** "1.5h", "45m" — estimates read better short. */
@@ -57,7 +58,8 @@ export function planComment(plan: LearningPlan, storyKeys: string[]): AdfDoc {
       plan.openQuestions.length > 0 ? 'warning' : 'success',
       adf.p(
         adf.strong('AutoLearn planned this topic: '),
-        `${stats.stories} stories, ${stats.subtasks} sub-tasks, about ${hours(stats.hours)} in total.`,
+        `${stats.stories} stories, ${stats.subtasks} sub-tasks, about ${hours(stats.hours)} in total ` +
+          `(${plan.stories.reduce((n, s) => n + storyPointsFor(s.estimatedHours), 0)} story points).`,
       ),
     ),
     adf.p(adf.strong('Goal: '), plan.goal),

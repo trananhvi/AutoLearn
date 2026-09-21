@@ -59,8 +59,14 @@ JIRA_PROJECTS=LEARN
 
 ### 3. Create the Jira project
 
-Create a **team-managed** project, Kanban template, with the key `LEARN`. It
-comes with Epic, Story and Subtask types and the To Do / In Progress / Done
+Create a **team-managed** project with the key `LEARN`, from either template:
+
+- **Scrum**: learn in sprints and get burndown and burnup charts. AutoLearn
+  sets each story's **Story point estimate** from its hours, rounded up to the
+  Fibonacci scale (≈1 point per hour), so the charts have something to burn.
+- **Kanban**: continuous flow, with no sprints and no points.
+
+Both come with Epic, Story and Subtask types and the To Do / In Progress / Done
 columns, which is enough to run.
 
 Optionally add these statuses under **Space settings → Work types → Epic →
@@ -122,6 +128,27 @@ Work through the stories in number order. The numbers follow the
 prerequisites. Move sub-tasks and stories to Done as you finish them. Every
 item carries the label `learning`, so the JQL `labels = learning AND status !=
 Done` is your to-do list across all topics.
+
+**In a Scrum project**, new stories land in the **backlog**, not on the board.
+Each sprint:
+
+1. **Plan it.** Create a sprint (one or two weeks) and drag the next few stories
+   in, in number order, until the points match what you can realistically
+   learn in that time. For the first sprint, guess; from the second on, use
+   last sprint's velocity.
+2. **Start it.** The sprint burndown begins at the total points committed.
+3. **Close stories as you finish them.** The burndown only drops when a
+   *story* reaches Done. Points sit on stories, not sub-tasks, as Jira expects.
+4. **Complete the sprint.** Unfinished stories roll into the next sprint or
+   back to the backlog. Then look at **Reports → Burnup**, **Sprint burndown**
+   and **Velocity**.
+
+Adding stories mid-sprint shows up on the burnup chart as *scope change*. That
+makes it a good way to see, on a chart, why scope creep hurts.
+
+The points are only a starting estimate. If a story took far longer than
+estimated, edit its points before closing the sprint and watch the velocity
+adjust.
 
 ### Plan one topic by hand
 

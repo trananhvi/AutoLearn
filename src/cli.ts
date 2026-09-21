@@ -67,6 +67,7 @@ const COMMANDS: Record<string, { summary: string; run: () => Promise<void> }> = 
         console.log(`\nproject     ${key}`);
         console.log(`  story     ${setup.storyType.name}`);
         console.log(`  sub-task  ${setup.subtaskType?.name ?? '(none — details go inside each story)'}`);
+        console.log(`  points    ${setup.storyPointsField ? `"${setup.storyPointsField.name}" (${setup.storyPointsField.id})` : '(none — sprint charts will read zero)'}`);
         console.log(`  trigger   "${setup.statuses.trigger}" + label "${config.trigger.label}"`);
         console.log(`  planning  "${setup.statuses.planning}"`);
         console.log(`  planned   "${setup.statuses.planned}"`);

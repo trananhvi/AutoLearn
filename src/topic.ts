@@ -4,7 +4,7 @@ import type { Config } from './config.ts';
 import type { AdfDoc } from './jira/adf.ts';
 import { toPlainText } from './jira/adf.ts';
 import type { JiraClient, JiraIssue, NewIssue } from './jira/client.ts';
-import type { ProjectSetup } from './jira/project.ts';
+import { storyPointsFor, type ProjectSetup } from './jira/project.ts';
 import { moveTo } from './jira/transitions.ts';
 import type { Logger } from './logger.ts';
 import { planTopic, type PlannerDeps, type Usage } from './plan/planner.ts';
@@ -214,6 +214,10 @@ async function publish(
       ),
       labels: [ITEM_LABEL],
       parentKey: epicKey,
+      // Points go on stories only: Jira's sprint charts ignore sub-task points.
+      ...(project.storyPointsField
+        ? { fields: { [project.storyPointsField.id]: storyPointsFor(story.estimatedHours) } }
+        : {}),
     })),
   );
   const storyKeys = stories.issues.map((i) => i.key);

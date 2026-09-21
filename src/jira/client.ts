@@ -74,6 +74,13 @@ export interface NewIssue {
   labels?: string[];
   /** Team-managed projects link an epic through `parent`, not "Epic Link". */
   parentKey?: string;
+  /** Extra fields by id, e.g. a story points custom field. */
+  fields?: Record<string, unknown>;
+}
+
+export interface CreateField {
+  fieldId: string;
+  name: string;
 }
 
 /**
@@ -147,6 +154,19 @@ export class JiraClient {
     return this.request('GET', `/rest/api/3/project/${encodeURIComponent(key)}`);
   }
 
+  /**
+   * The fields an issue type accepts on create in this project. A field that
+   * exists on the site but is not on this screen makes the create fail, so this
+   * is the check that matters, not the global field list.
+   */
+  async createFields(projectKey: string, issueTypeId: string): Promise<CreateField[]> {
+    const page = await this.request<{ fields?: CreateField[]; results?: CreateField[] }>(
+      'GET',
+      `/rest/api/3/issue/createmeta/${encodeURIComponent(projectKey)}/issuetypes/${encodeURIComponent(issueTypeId)}?maxResults=200`,
+    );
+    return page.fields ?? page.results ?? [];
+  }
+
   getIssue(key: string, fields = DEFAULT_FIELDS): Promise<JiraIssue> {
     return this.request('GET', `/rest/api/3/issue/${encodeURIComponent(key)}?fields=${fields.join(',')}`);
   }
@@ -204,6 +224,7 @@ export class JiraClient {
               ...(issue.description ? { description: issue.description } : {}),
               ...(issue.labels?.length ? { labels: issue.labels } : {}),
               ...(issue.parentKey ? { parent: { key: issue.parentKey } } : {}),
+              ...issue.fields,
             },
           })),
         },

@@ -14,7 +14,7 @@ import { plan } from './fixtures.ts';
 
 /** An in-memory Jira holding just what a topic run touches. */
 class FakeJira implements JiraPort {
-  issues = new Map<string, { summary: string; description: string; status: string; labels: string[]; parent: string | null; type: string }>();
+  issues = new Map<string, { summary: string; description: string; status: string; labels: string[]; parent: string | null; type: string; fields?: Record<string, unknown> }>();
   comments: Array<{ key: string; text: string }> = [];
   bulkCalls = 0;
   #next = 100;
@@ -50,7 +50,7 @@ class FakeJira implements JiraPort {
       const key = `LEARN-${this.#next++}`;
       this.issues.set(key, {
         summary: n.summary, description: toPlainText(n.description), status: 'To Do',
-        labels: n.labels ?? [], parent: n.parentKey ?? null, type: n.issueType,
+        labels: n.labels ?? [], parent: n.parentKey ?? null, type: n.issueType, fields: n.fields,
       });
       return { id: key, key };
     });
@@ -78,6 +78,7 @@ const project: ProjectSetup = {
   key: 'LEARN',
   storyType: { id: '10', name: 'Story', subtask: false, hierarchyLevel: 0 },
   subtaskType: { id: '11', name: 'Subtask', subtask: true, hierarchyLevel: -1 },
+  storyPointsField: { id: 'customfield_10016', name: 'Story point estimate' },
   statuses: { trigger: 'Ready for AI', planning: 'Planning', planned: 'In Progress', failed: 'Blocked' },
   warnings: [],
 };
@@ -136,6 +137,19 @@ describe('runTopic', () => {
     const firstSub = jira.issues.get(result.subtaskKeys[0]!)!;
     expect(firstSub.parent).toBe(result.storyKeys[0]);
     expect(firstSub.summary).toBe('1.1 Detail 0a');
+  });
+
+  it('sets story points on stories, so sprint charts have something to burn, and never on sub-tasks', async () => {
+    const result = await runTopic('LEARN-1', deps());
+    if (!result.ok) throw new Error(result.error);
+    expect(jira.issues.get(result.storyKeys[0]!)!.fields).toEqual({ customfield_10016: 2 });
+    expect(jira.issues.get(result.subtaskKeys[0]!)!.fields).toBeUndefined();
+  });
+
+  it('leaves points out when the project has no points field', async () => {
+    const result = await runTopic('LEARN-1', deps(okRunner(), { project: { ...project, storyPointsField: null } }));
+    if (!result.ok) throw new Error(result.error);
+    expect(jira.issues.get(result.storyKeys[0]!)!.fields).toBeUndefined();
   });
 
   it('uses two bulk requests, not one per issue', async () => {
